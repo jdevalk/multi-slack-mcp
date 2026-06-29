@@ -1,0 +1,29 @@
+{
+  "workspaces": {
+    "example-team": {
+      "user_token": "xoxp-REPLACE-WITH-EXAMPLE-TEAM-TOKEN",
+      "team_name": "Example Team"
+    },
+    "example-company": {
+      "user_token": "xoxp-REPLACE-WITH-EXAMPLE-COMPANY-TOKEN",
+      "team_name": "Example Company"
+    },
+    "workspace-3": {
+      "user_token": "xoxp-REPLACE",
+      "team_name": "Workspace 3"
+    },
+    "workspace-4": {
+      "user_token": "xoxp-REPLACE",
+      "team_name": "Workspace 4"
+    },
+    "workspace-5": {
+      "user_token": "xoxp-REPLACE",
+      "team_name": "Workspace 5"
+    },
+    "workspace-6": {
+      "user_token": "xoxp-REPLACE",
+      "team_name": "Workspace 6"
+    }
+  },
+  "default_workspace": "example-team"
+}

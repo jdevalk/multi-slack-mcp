@@ -1,0 +1,23 @@
+# Never commit real credentials — config.example.json is fine, config.json is not.
+config.json
+config.json.bak
+config.json.tmp
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs
+*.log
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Obsidian metadata (in case the folder ever lives at the vault root)
+.obsidian/
