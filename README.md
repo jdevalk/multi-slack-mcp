@@ -22,24 +22,44 @@ optional `workspace` argument; omit it to use your configured default.
 
 ## Install
 
-On macOS, you can install Python with `brew install python@3.12`.
-On Linux, install Python 3.10+ and venv support with your distribution's
-package manager. Debian/Ubuntu provide the `python3` and `python3-venv`
-packages; check your Python version with `python3 --version`.
+### macOS
 
-From this folder, on either platform:
+Install Python 3.10+ if needed. With Homebrew:
+
+```bash
+brew install python@3.12
+```
+
+Then run the installer from this folder:
 
 ```bash
 bash install.sh
 ```
+
+### Linux
+
+Install Python 3.10+ and venv support with your distribution's package
+manager. On Debian/Ubuntu:
+
+```bash
+sudo apt install python3 python3-venv
+```
+
+Check that your Python version is 3.10 or newer, then run the installer
+from this folder:
+
+```bash
+python3 --version
+bash install.sh
+```
+
+### Installation, config and logs
 
 The installer copies the server files, creates a `.venv/`, installs
 requirements, seeds `config.json` from
 `config.example.json` (only if it doesn't exist), and prints the registration
 snippet at the end. Re-run it any time to upgrade code or deps — it never
 overwrites `config.json`.
-
-### Installation, config and logs
 
 | Location | macOS | Linux defaults |
 |---|---|---|
