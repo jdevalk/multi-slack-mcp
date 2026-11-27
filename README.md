@@ -163,7 +163,11 @@ config-driven.
 
 Open **Claude Desktop → Settings → Developer → Edit Config**, or edit
 `~/Library/Application Support/Claude/claude_desktop_config.json` directly,
-and add the `multi-slack` entry to `mcpServers`:
+and add the `multi-slack` entry to `mcpServers`.
+
+Copy the configuration printed by `install.sh`; it contains the absolute
+paths for your account. In the example below, replace `YOUR_USERNAME` in
+both paths with your macOS account username:
 
 ```json
 {
