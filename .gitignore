@@ -2,6 +2,15 @@
 config.json
 config.json.bak
 config.json.tmp
+config.*.json
+!config.example.json
+.env
+.env.*
+!.env.example
+remote-password
+
+# Local review output
+community-report.html
 
 # Python build artifacts
 __pycache__/
