@@ -98,8 +98,8 @@ credentials, type `clear` in that field to remove the old cookie.
 ### Use the local web admin
 
 ```bash
-~/Library/Application\ Support/multi-slack-mcp/.venv/bin/python \
-  ~/Library/Application\ Support/multi-slack-mcp/admin.py
+"$HOME/Library/Application Support/multi-slack-mcp/.venv/bin/python" \
+  "$HOME/Library/Application Support/multi-slack-mcp/admin.py"
 ```
 
 Opens a localhost-only UI at <http://127.0.0.1:8765/>. Add a workspace and

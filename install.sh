@@ -134,7 +134,7 @@ cat <<EOF
     "multi-slack" entry below to "mcpServers". Then fully quit & relaunch
     Claude Desktop.
 
-    Config file: ~/Library/Application Support/Claude/claude_desktop_config.json
+    Config file: $HOME/Library/Application Support/Claude/claude_desktop_config.json
 
     {
       "mcpServers": {
@@ -148,6 +148,6 @@ cat <<EOF
   Register with Claude Code (CLI), user scope:
     claude mcp add multi-slack --scope user -- "$VENV_DIR/bin/python" "$DEST_DIR/server.py"
 
-  Logs:  ~/Library/Logs/multi-slack-mcp.log
+  Logs:  $HOME/Library/Logs/multi-slack-mcp.log
 ==============================================================
 EOF
