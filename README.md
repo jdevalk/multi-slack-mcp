@@ -208,15 +208,15 @@ argument. Omit it to use `default_workspace`.
 Errors are returned as structured payloads, e.g.
 `{"error": "channel_not_found", "message": "...", "_workspace": "example-team"}`.
 
-## Out of scope (v1, future work)
-
-Canvases, reactions, scheduled messages, drafts, files, custom emojis.
-
 ## Troubleshooting
 
-- **Indicator missing in Claude Desktop**: tail `~/Library/Logs/Claude/mcp*.log`
-  and `~/Library/Logs/multi-slack-mcp.log`. Most common cause: typo in
-  `claude_desktop_config.json` — validate with `python3 -m json.tool`.
+- **Indicator missing in Claude Desktop on macOS**: check
+  `~/Library/Logs/Claude/mcp.log` for MCP connection logs and
+  `~/Library/Logs/Claude/mcp-server-multi-slack.log` for this server's output
+  (the filename follows the `multi-slack` name in your Claude configuration).
+  The server also writes its own logs to `~/Library/Logs/multi-slack-mcp.log`,
+  regardless of which MCP client launches it. Check
+  `claude_desktop_config.json` for typos with `python3 -m json.tool`.
 - **`invalid_auth` with a browser session**: copy a fresh `xoxc-` token and
   `d` cookie from the same signed-in Slack browser session. Save both and
   click **Test**. The next MCP tool call uses the saved values.
