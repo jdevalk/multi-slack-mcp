@@ -26,7 +26,8 @@ import sys
 import urllib.parse
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from pathlib import Path
+
+from paths import app_paths
 
 try:
     from slack_sdk import WebClient
@@ -38,18 +39,7 @@ except ImportError:  # pragma: no cover
     raise
 
 
-CONFIG_PATH = Path(
-    os.environ.get(
-        "MULTI_SLACK_MCP_CONFIG",
-        str(
-            Path.home()
-            / "Library"
-            / "Application Support"
-            / "multi-slack-mcp"
-            / "config.json"
-        ),
-    )
-)
+CONFIG_PATH = app_paths()["config"]
 
 KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,38}$")
 # Show one flash message per request via query string.

@@ -13,20 +13,20 @@ For workspaces where you can't install a custom app, an optional
 `web_client_cookie` (the `d=` browser cookie value, usually starting
 with `xoxd-`) can be paired with a `xoxc-` token in `user_token`.
 
-Transport: stdio. Logs go to ~/Library/Logs/multi-slack-mcp.log; stdout is
-reserved for MCP JSON-RPC framing.
+Transport: stdio. Logs use the platform's log/state directory (see README).
+Stdout is reserved for MCP JSON-RPC framing.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from threading import Lock
 from typing import Any
+
+from paths import app_paths
 
 try:
     from mcp.server.fastmcp import FastMCP
@@ -50,9 +50,10 @@ except ImportError as exc:  # pragma: no cover
 
 # ---------- Logging --------------------------------------------------------
 
-LOG_DIR = Path.home() / "Library" / "Logs"
+_PATHS = app_paths()
+LOG_FILE = _PATHS["log"]
+LOG_DIR = LOG_FILE.parent
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR / "multi-slack-mcp.log"
 
 _handler = RotatingFileHandler(
     LOG_FILE, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
@@ -66,19 +67,8 @@ log = logging.getLogger("multi-slack-mcp")
 
 # ---------- Config ---------------------------------------------------------
 
-# Allow override for testing; defaults to install location.
-CONFIG_PATH = Path(
-    os.environ.get(
-        "MULTI_SLACK_MCP_CONFIG",
-        str(
-            Path.home()
-            / "Library"
-            / "Application Support"
-            / "multi-slack-mcp"
-            / "config.json"
-        ),
-    )
-)
+# Shared with the admin and installer; MULTI_SLACK_MCP_CONFIG overrides it.
+CONFIG_PATH = _PATHS["config"]
 
 
 def _load_config() -> dict[str, Any] | None:
