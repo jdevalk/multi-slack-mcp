@@ -62,7 +62,7 @@ done
 if [ ! -f "$DEST_DIR/config.json" ]; then
   cp "$DEST_DIR/config.example.json" "$DEST_DIR/config.json"
   echo "    seeded config.json from config.example.json"
-  echo "    >> EDIT $DEST_DIR/config.json and paste your xoxp- User OAuth tokens."
+  echo "    >> Add credentials using either connection option below; creating a Slack app is optional."
 else
   echo "    config.json already exists — left untouched"
 fi
@@ -95,15 +95,39 @@ cat <<EOF
   multi-slack-mcp installed.
 
   Next steps:
-    1. Create one Slack app per workspace at https://api.slack.com/apps
-       (Add scopes under User Token Scopes — see $DEST_DIR/scopes.txt.)
-    2. Install each app into its workspace and copy the User OAuth Token
-       (xoxp-...) — NOT the Bot User OAuth Token below it.
-    3. Edit $DEST_DIR/config.json — fill in xoxp-... user_token values.
+    1. Launch the local web admin:
+       "$VENV_DIR/bin/python" "$DEST_DIR/admin.py"
+       Then open http://127.0.0.1:8765/ in your browser.
 
-  Easy way to add/edit workspaces — launch the local admin UI:
-    "$VENV_DIR/bin/python" "$DEST_DIR/admin.py"
-    then open http://127.0.0.1:8765/ in your browser.
+    2. Choose a connection option for each workspace.
+       Creating a Slack app is optional; you can mix both methods.
+
+       Option A: Use your Slack browser session (no app needed).
+         Open your workspace in Chrome or Edge and open Developer Tools.
+         Under Network > Fetch/XHR, reload Slack and select a request to
+         slack.com/api/. Copy the xoxc- token from its Payload into Token.
+         Under Application > Storage > Cookies, select the Slack site
+         and copy the cookie named d into Browser cookie. Copy only its
+         value (usually xoxd-...), without d= or quotes. Keep any % sequences.
+         Use the token and cookie from the same signed-in browser session.
+
+       Option B: Create and install a Slack app.
+         Create an app for the workspace at https://api.slack.com/apps.
+         Under OAuth & Permissions > User Token Scopes, add the scopes in:
+           $DEST_DIR/scopes.txt
+         Install the app, then copy its User OAuth Token (xoxp-...) into
+         Token. Leave Browser cookie blank for this method.
+         If replacing browser credentials, enter clear to remove the old cookie.
+
+    3. Save the workspace, then click Test to check the connection.
+       Repeat for each workspace. Saved credentials apply on the next MCP
+       tool call. When upgrading from a version without automatic reload,
+       restart the MCP connection once to load the updated server code.
+
+  You can also edit $DEST_DIR/config.json directly:
+    Browser session: set user_token to xoxc-... and web_client_cookie to
+    the d cookie value. Installed app: set user_token to the xoxp-... token.
+    Full setup instructions and JSON examples: $DEST_DIR/README.md
 
   Register with Claude Desktop:
     Open Claude Desktop > Settings > Developer > Edit Config and add the
