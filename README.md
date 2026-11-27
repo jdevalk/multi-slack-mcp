@@ -263,6 +263,70 @@ Fully quit Claude Desktop (⌘Q) and relaunch — it only reads the config at
 startup. The MCP indicator in the bottom-right of the input box should show
 the new `multi-slack` tools.
 
+### ChatGPT desktop / Codex (macOS or Linux)
+
+Use ChatGPT desktop's local MCP settings on the computer where you installed
+Multi-Slack MCP. The desktop app and Codex share MCP configuration on the
+same host. See [OpenAI's MCP setup guide](https://learn.chatgpt.com/docs/extend/mcp).
+
+1. Open **Settings > MCP servers > Add server**.
+2. Name the server `multi-slack` and select **STDIO**.
+3. Set **Command** to the installed `.venv/bin/python` and add the installed
+   `server.py` path as an argument. Copy the absolute paths from the installer's
+   printed configuration.
+4. If the printed configuration includes `env`, add those environment
+   variables too, including `MULTI_SLACK_MCP_CONFIG`.
+5. Save and select **Restart**. In the chat, use `/mcp` to check the connection,
+   then ask to list the configured Slack workspaces.
+
+If you have the Codex CLI, you can register the same server from the terminal.
+
+**macOS:**
+
+```bash
+codex mcp add multi-slack -- \
+  "$HOME/Library/Application Support/multi-slack-mcp/.venv/bin/python" \
+  "$HOME/Library/Application Support/multi-slack-mcp/server.py"
+```
+
+**Linux:**
+
+```bash
+codex mcp add multi-slack -- \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/multi-slack-mcp/.venv/bin/python" \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/multi-slack-mcp/server.py"
+```
+
+For a custom config path, add `--env "MULTI_SLACK_MCP_CONFIG=/absolute/path/to/config.json"`
+before `--`. Run `codex mcp list` to confirm registration.
+
+#### ChatGPT on the web
+
+ChatGPT's web app uses remote MCP connections; it cannot launch this local
+stdio server directly. This project does not currently provide a remote MCP
+endpoint. Connecting it to ChatGPT web would require an additional remote
+transport and connection setup. See [OpenAI's connection guidance](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta).
+
+The web admin at `http://127.0.0.1:8765/` manages Slack credentials; it is
+**not an MCP endpoint** to enter in ChatGPT's app settings.
+
+### Meta Muse
+
+There is currently **no verified direct connection procedure for this project
+in the Meta Muse app**. Multi-Slack MCP runs as a local stdio process; Meta's
+[Muse connector guide](https://www.meta.com/en-gb/help/superintelligence/1687253048996149/)
+describes listed connectors and custom connectors, but does not document
+registering a local stdio server from your computer.
+
+To connect Slack through Muse's own connector, open **Settings > Connectors**,
+select **Connect** beside Slack if it is available, and follow the sign-in
+steps. This uses Meta's Slack integration, not this project's multiple-workspace
+or browser-session authentication features.
+
+Meta's separate **Muse Code** product does support local MCP servers; its
+[MCP documentation](https://meta-models.github.io/muse-code-sdk/1.4/guides/extend/mcp-servers/)
+describes that setup. Muse Code configuration does not connect the Muse app.
+
 ### Other MCP clients (macOS or Linux)
 
 Use a client that supports local stdio MCP servers. Set its command to the
