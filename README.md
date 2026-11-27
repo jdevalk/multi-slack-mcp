@@ -128,8 +128,6 @@ For each Slack workspace you want to expose:
    `channels:history`, `channels:read`, `groups:history`, `groups:read`,
    `im:history`, `im:read`, `mpim:history`, `mpim:read`, `chat:write`,
    `users:read`, `search:read`.
-   The same list is in `scopes.txt` as a comma-separated string for
-   paste-in convenience.
 3. **Install to Workspace** and approve.
 4. Copy the **User OAuth Token** (`xoxp-…`) from **OAuth & Permissions**
    into the web admin's **Token** field. The Bot User OAuth Token starts

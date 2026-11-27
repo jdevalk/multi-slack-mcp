@@ -58,7 +58,7 @@ echo "==> Installing multi-slack-mcp into: $DEST_DIR"
 mkdir -p "$DEST_DIR"
 
 # 1. Copy source files (never overwrites config.json).
-for f in paths.py server.py admin.py requirements.txt config.example.json scopes.txt README.md; do
+for f in paths.py server.py admin.py requirements.txt config.example.json README.md; do
   if [ -f "$SRC_DIR/$f" ]; then
     cp "$SRC_DIR/$f" "$DEST_DIR/$f"
     echo "    copied $f"
@@ -130,8 +130,9 @@ cat <<EOF
 
        Option B: Create and install a Slack app.
          Create an app for the workspace at https://api.slack.com/apps.
-         Under OAuth & Permissions > User Token Scopes, add the scopes in:
-           $DEST_DIR/scopes.txt
+         Under OAuth & Permissions > User Token Scopes, add the scopes listed
+         in README.md under "Option 2: Create a Slack app":
+           $DEST_DIR/README.md
          Install the app, then copy its User OAuth Token (xoxp-...) into
          Token. Leave Browser cookie blank for this method.
          If replacing browser credentials, enter clear to remove the old cookie.
