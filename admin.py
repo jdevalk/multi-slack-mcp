@@ -118,6 +118,11 @@ input[type=text], input[type=password] { width: 100%; padding: 6px 8px;
   font: inherit; border: 1px solid #bbb; border-radius: 6px;
   box-sizing: border-box; }
 .hint { color: #888; font-size: 12px; margin-top: 6px; }
+.credential-help { margin: 8px 0 16px; font-size: 13px; }
+.credential-help summary { cursor: pointer; font-weight: 600; }
+.credential-help ol { margin: 8px 0; padding-left: 22px; max-width: 72ch; }
+.credential-help li + li { margin-top: 6px; }
+.credential-help p { margin: 8px 0; max-width: 72ch; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 1px 7px; border-radius: 999px;
         background: #eef; color: #336; font-size: 11px; margin-left: 6px; }
@@ -228,8 +233,7 @@ def page_index(cfg: dict, flash: tuple[str, str] | None) -> bytes:
   <label><input type="checkbox" name="make_default" value="1"> Make this the default workspace</label>
   <div class="hint" style="margin: 10px 0;">
     After saving, click <strong>Test</strong> to verify the token works.
-    Restart the MCP host (Claude Desktop / Claude Code) for it to pick up
-    config changes — the MCP server only reads config at startup.
+    The MCP server picks up saved changes on its next tool call.
   </div>
   <input type="submit" value="Add workspace">
 </form>
@@ -270,10 +274,50 @@ def page_edit(cfg: dict, key: str, flash: tuple[str, str] | None) -> bytes:
     <span class="hint">(leave blank to keep current: <code>{html.escape(mask(token))}</code>)</span>
   </label>
   <input id="user_token" name="user_token" type="password" placeholder="xoxp-... or xoxc-...">
+  <details class="credential-help" open>
+    <summary>Find your browser token (xoxc-)</summary>
+    <ol>
+      <li>Open the Slack workspace you want to connect in Chrome or Edge and sign in.</li>
+      <li>Open Developer Tools with <strong>Option + Command + I</strong> on Mac,
+        or <strong>Ctrl + Shift + I</strong> on Windows/Linux.</li>
+      <li>Select <strong>Network</strong>, select <strong>Fetch/XHR</strong>, then reload Slack.</li>
+      <li>Select a request to <code>slack.com/api/</code> and open <strong>Payload</strong>.
+        Look for a <code>token</code> field starting with <code>xoxc-</code>.
+        If it is missing, try another API request or open a channel to create more requests.</li>
+      <li>Copy the complete <code>xoxc-</code> value into <strong>Token</strong>,
+        then get the cookie from the same browser session below.</li>
+    </ol>
+  </details>
+  <details class="credential-help">
+    <summary>Find an installed app's User OAuth Token (xoxp-)</summary>
+    <ol>
+      <li>Open <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer">Your Slack apps</a>
+        and select the app installed in this workspace.</li>
+      <li>Open <strong>OAuth &amp; Permissions</strong>. If needed, add the required
+        <strong>User Token Scopes</strong> and install or reinstall the app in the workspace.</li>
+      <li>Copy the <strong>User OAuth Token</strong> starting with <code>xoxp-</code>
+        into <strong>Token</strong>. A Bot User OAuth Token starts with <code>xoxb-</code>.</li>
+    </ol>
+    <p>No browser cookie is needed for <code>xoxp-</code> tokens.
+      If replacing a browser token, type <code>clear</code> in Browser cookie to remove the old cookie.</p>
+  </details>
   <label for="web_client_cookie">Browser cookie
     <span class="hint">(<code>d=</code> cookie value, only for <code>xoxc-</code> tokens; leave blank to keep current — {cookie_current}. Type "clear" to remove.)</span>
   </label>
   <input id="web_client_cookie" name="web_client_cookie" type="password" placeholder="xoxd-... or 'clear'">
+  <details class="credential-help" open>
+    <summary>Find your browser cookie (xoxd-)</summary>
+    <ol>
+      <li>In the same Slack tab's Developer Tools, open <strong>Application</strong>
+        (it may be under the <strong>&raquo;</strong> menu).</li>
+      <li>Under <strong>Storage &gt; Cookies</strong>, select the Slack site
+        and find the cookie named exactly <code>d</code>.</li>
+      <li>Copy its complete <strong>Value</strong>, usually starting with <code>xoxd-</code>,
+        into <strong>Browser cookie</strong>. Copy only the value, without <code>d=</code>
+        or surrounding quotes; leave any <code>%</code> sequences unchanged.</li>
+    </ol>
+    <p>Click <strong>Save</strong>, then <strong>Test</strong> on the workspace list to check the connection.</p>
+  </details>
   <div style="margin-top: 14px;" class="actions">
     <input type="submit" value="Save">
     <a href="/"><button type="button">Cancel</button></a>
@@ -407,7 +451,7 @@ class Handler(BaseHTTPRequestHandler):
         save_config(cfg)
         self._redirect(
             "/",
-            f"Added '{key}'. Click Test to verify, then restart the MCP host.",
+            f"Added '{key}'. Click Test to verify. MCP changes apply on the next tool call.",
         )
 
     def _handle_update(self, form: dict[str, str]):
@@ -471,7 +515,7 @@ class Handler(BaseHTTPRequestHandler):
         save_config(cfg)
         self._redirect(
             "/",
-            f"Updated '{new_key}'.{rename_msg} Restart the MCP host to pick it up.",
+            f"Updated '{new_key}'.{rename_msg} MCP changes apply on the next tool call.",
         )
 
     def _handle_delete(self, form: dict[str, str]):

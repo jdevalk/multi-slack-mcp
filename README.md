@@ -69,8 +69,14 @@ Writes `config.json` atomically and keeps the previous version at
 explicitly overridden — tokens are stored plaintext, never expose this UI to
 the network.
 
-Restart the MCP host (Claude Desktop / Claude Code) after editing — the MCP
-server only reads `config.json` at startup.
+The MCP server reloads `config.json` before each tool call. Saved tokens,
+cookies, workspace changes and defaults take effect on the next call without
+restarting the client. Requests already in progress finish with their original
+credentials. If the file is temporarily unreadable or invalid, the server keeps
+the last valid configuration and retries on the next call.
+
+When upgrading from a version without automatic reload, restart the MCP
+connection once to load the updated server code.
 
 ### Option B — edit JSON directly
 

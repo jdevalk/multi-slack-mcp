@@ -25,6 +25,7 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 try:
@@ -80,19 +81,34 @@ CONFIG_PATH = Path(
 )
 
 
-def _load_config() -> dict[str, Any]:
-    if not CONFIG_PATH.exists():
-        log.error("Config file not found at %s", CONFIG_PATH)
-        return {"workspaces": {}, "default_workspace": None}
+def _load_config() -> dict[str, Any] | None:
+    """Read one complete snapshot; invalid/unavailable files keep the last config."""
     try:
         with CONFIG_PATH.open("r", encoding="utf-8") as f:
             cfg = json.load(f)
-    except json.JSONDecodeError as e:
-        log.exception("Failed to parse config: %s", e)
-        return {"workspaces": {}, "default_workspace": None}
+    except (OSError, ValueError):
+        log.warning("Cannot read config; retaining the last valid configuration")
+        return None
 
-    workspaces = cfg.get("workspaces") or {}
+    if not isinstance(cfg, dict):
+        log.warning("Invalid config structure; retaining the last valid configuration")
+        return None
+    workspaces = cfg.get("workspaces", {})
     default = cfg.get("default_workspace")
+    if (
+        not isinstance(workspaces, dict)
+        or (default is not None and not isinstance(default, str))
+        or any(
+            not isinstance(ws, dict)
+            or any(
+                ws.get(field) is not None and not isinstance(ws[field], str)
+                for field in ("user_token", "bot_token", "web_client_cookie", "team_name")
+            )
+            for ws in workspaces.values()
+        )
+    ):
+        log.warning("Invalid config structure; retaining the last valid configuration")
+        return None
     if default and default not in workspaces:
         log.warning(
             "default_workspace '%s' is not in workspaces map; ignoring",
@@ -101,20 +117,32 @@ def _load_config() -> dict[str, Any]:
         default = None
     if not default and workspaces:
         default = next(iter(workspaces.keys()))
-    log.info(
-        "Loaded config: %d workspace(s); default=%s",
-        len(workspaces),
-        default,
-    )
     return {"workspaces": workspaces, "default_workspace": default}
 
 
-CONFIG = _load_config()
+CONFIG = _load_config() or {"workspaces": {}, "default_workspace": None}
+_CONFIG_LOCK = Lock()
 
 
 # ---------- Slack client cache --------------------------------------------
 
 _CLIENTS: dict[str, WebClient] = {}
+
+
+def _refresh_config() -> None:
+    """Reload before each tool call. Caller holds _CONFIG_LOCK."""
+    global CONFIG
+    updated = _load_config()
+    if updated is None or updated == CONFIG:
+        return
+    for key in list(_CLIENTS):
+        if (
+            key not in updated["workspaces"]
+            or updated["workspaces"][key] != CONFIG["workspaces"].get(key)
+        ):
+            del _CLIENTS[key]
+    CONFIG = updated
+    log.info("Reloaded config: %d workspace(s)", len(CONFIG["workspaces"]))
 
 
 def _resolve_workspace(workspace: str | None) -> tuple[str | None, dict | None]:
@@ -181,11 +209,16 @@ def _client_for(workspace_key: str) -> WebClient:
 
 def _wrap_call(workspace: str | None, fn):
     """Resolve workspace, run fn(client, key), return dict or error dict."""
-    key, err = _resolve_workspace(workspace)
-    if err:
-        return err
+    key = workspace
     try:
-        client = _client_for(key)
+        # Resolve and select a client from the same snapshot. In-flight Slack
+        # requests keep their client; the next request uses updated credentials.
+        with _CONFIG_LOCK:
+            _refresh_config()
+            key, err = _resolve_workspace(workspace)
+            if err:
+                return err
+            client = _client_for(key)
         result = fn(client, key)
         # SlackResponse acts like a dict; coerce to plain dict.
         if hasattr(result, "data"):
@@ -220,13 +253,15 @@ mcp = FastMCP("multi-slack-mcp")
 @mcp.tool()
 def slack_list_workspaces() -> dict:
     """List all configured Slack workspaces (kebab-case keys + team names)."""
-    return {
-        "default_workspace": CONFIG["default_workspace"],
-        "workspaces": [
-            {"key": k, "team_name": v.get("team_name", k)}
-            for k, v in CONFIG["workspaces"].items()
-        ],
-    }
+    with _CONFIG_LOCK:
+        _refresh_config()
+        return {
+            "default_workspace": CONFIG["default_workspace"],
+            "workspaces": [
+                {"key": k, "team_name": v.get("team_name", k)}
+                for k, v in CONFIG["workspaces"].items()
+            ],
+        }
 
 
 @mcp.tool()
