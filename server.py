@@ -30,7 +30,6 @@ from paths import app_paths
 
 try:
     from mcp.server.fastmcp import FastMCP
-    from mcp.types import ToolAnnotations
 except ImportError as exc:  # pragma: no cover
     sys.stderr.write(
         "ERROR: missing dependency 'mcp'. Run install.sh first.\n"
@@ -238,6 +237,10 @@ def _wrap_call(workspace: str | None, fn):
 
 # ---------- MCP server -----------------------------------------------------
 
+mcp = FastMCP("multi-slack-mcp")
+
+
+@mcp.tool()
 def slack_list_workspaces() -> dict:
     """List all configured Slack workspaces (kebab-case keys + team names)."""
     with _CONFIG_LOCK:
@@ -251,6 +254,7 @@ def slack_list_workspaces() -> dict:
         }
 
 
+@mcp.tool()
 def slack_search_public_and_private(
     query: str,
     count: int = 20,
@@ -263,6 +267,7 @@ def slack_search_public_and_private(
     )
 
 
+@mcp.tool()
 def slack_read_channel(
     channel_id: str,
     limit: int = 50,
@@ -286,6 +291,7 @@ def slack_read_channel(
     return _wrap_call(workspace, call)
 
 
+@mcp.tool()
 def slack_read_thread(
     channel_id: str,
     thread_ts: str,
@@ -298,6 +304,7 @@ def slack_read_thread(
     )
 
 
+@mcp.tool()
 def slack_read_user_profile(
     user_id: str,
     workspace: str | None = None,
@@ -308,6 +315,7 @@ def slack_read_user_profile(
     )
 
 
+@mcp.tool()
 def slack_send_message(
     channel_id: str,
     text: str,
@@ -328,6 +336,7 @@ def slack_send_message(
     return _wrap_call(workspace, call)
 
 
+@mcp.tool()
 def slack_search_channels(
     query: str | None = None,
     workspace: str | None = None,
@@ -365,6 +374,7 @@ def slack_search_channels(
     return _wrap_call(workspace, call)
 
 
+@mcp.tool()
 def slack_search_users(
     query: str,
     workspace: str | None = None,
@@ -408,6 +418,7 @@ def slack_search_users(
     return _wrap_call(workspace, call)
 
 
+@mcp.tool()
 def slack_list_channel_members(
     channel_id: str,
     workspace: str | None = None,
@@ -428,26 +439,6 @@ def slack_list_channel_members(
         return {"ok": True, "members": members}
 
     return _wrap_call(workspace, call)
-
-
-def create_server(**options) -> FastMCP:
-    """Expose the same tools over local stdio or authenticated remote HTTP."""
-    instance = FastMCP("multi-slack-mcp", **options)
-    for function in (
-        slack_list_workspaces, slack_search_public_and_private,
-        slack_read_channel, slack_read_thread, slack_read_user_profile,
-        slack_send_message, slack_search_channels, slack_search_users,
-        slack_list_channel_members,
-    ):
-        read_only = function is not slack_send_message
-        instance.add_tool(function, annotations=ToolAnnotations(
-            readOnlyHint=read_only, destructiveHint=False,
-            idempotentHint=read_only, openWorldHint=True,
-        ))
-    return instance
-
-
-mcp = create_server()
 
 
 # ---------- Entrypoint -----------------------------------------------------

@@ -2,7 +2,6 @@
 config.json
 config.json.bak
 config.json.tmp
-remote-password
 
 # Python build artifacts
 __pycache__/
