@@ -58,7 +58,7 @@ echo "==> Installing multi-slack-mcp into: $DEST_DIR"
 mkdir -p "$DEST_DIR"
 
 # 1. Copy source files (never overwrites config.json).
-for f in paths.py server.py admin.py requirements.txt config.example.json README.md; do
+for f in paths.py server.py admin.py remote.py remote_auth.py requirements.txt config.example.json README.md; do
   if [ -f "$SRC_DIR/$f" ]; then
     cp "$SRC_DIR/$f" "$DEST_DIR/$f"
     echo "    copied $f"
@@ -103,8 +103,8 @@ fi
 "$VENV_DIR/bin/pip" install -r "$DEST_DIR/requirements.txt"
 
 # 4. Quick syntax check.
-"$VENV_DIR/bin/python" -m py_compile "$DEST_DIR/paths.py" "$DEST_DIR/server.py" "$DEST_DIR/admin.py"
-echo "==> server.py + admin.py compile cleanly"
+"$VENV_DIR/bin/python" -m py_compile "$DEST_DIR/paths.py" "$DEST_DIR/server.py" "$DEST_DIR/admin.py" "$DEST_DIR/remote.py" "$DEST_DIR/remote_auth.py"
+echo "==> Server, admin and remote launcher compile cleanly"
 
 cat <<EOF
 
@@ -152,6 +152,14 @@ cat <<EOF
 
   Config: $CONFIG_PATH
   Logs:   $LOG_PATH
+
+  ChatGPT web or Meta Muse (optional remote connection):
+    Install cloudflared, then run:
+    MULTI_SLACK_MCP_CONFIG="$CONFIG_PATH" "$VENV_DIR/bin/python" "$DEST_DIR/remote.py" --tunnel
+    Use the printed HTTPS /mcp URL and OAuth authentication.
+    To display the connection password locally:
+    MULTI_SLACK_MCP_CONFIG="$CONFIG_PATH" "$VENV_DIR/bin/python" "$DEST_DIR/remote.py" --show-password
+    Keep the launcher running. See README.md for each client's setup steps.
 ==============================================================
 EOF
 

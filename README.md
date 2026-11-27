@@ -18,7 +18,7 @@ optional `workspace` argument; omit it to use your configured default.
 
 - Platforms: **macOS and Linux**.
 - Requirements: **Python 3.10+**, with `venv` support, and Bash.
-- Transport: **stdio**; your MCP client launches the server process.
+- Transports: **stdio** for local clients, or **Streamable HTTP with OAuth** for remote clients.
 
 ## Install
 
@@ -300,32 +300,93 @@ codex mcp add multi-slack -- \
 For a custom config path, add `--env "MULTI_SLACK_MCP_CONFIG=/absolute/path/to/config.json"`
 before `--`. Run `codex mcp list` to confirm registration.
 
-#### ChatGPT on the web
+### Remote access from your computer
 
-ChatGPT's web app uses remote MCP connections; it cannot launch this local
-stdio server directly. This project does not currently provide a remote MCP
-endpoint. Connecting it to ChatGPT web would require an additional remote
-transport and connection setup. See [OpenAI's connection guidance](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta).
+Use this mode for clients that need an HTTPS MCP URL. It runs the same tools
+and uses the same Slack config as the local server. **No Slack app is needed
+when you use browser-session credentials.** Remote clients sign in through a
+separate OAuth connection before they can access any workspace.
 
-The web admin at `http://127.0.0.1:8765/` manages Slack credentials; it is
-**not an MCP endpoint** to enter in ChatGPT's app settings.
+#### Start the remote connection
 
-### Meta Muse
+1. Re-run `bash install.sh` to install the remote launcher.
+2. Install [cloudflared](https://developers.cloudflare.com/tunnel/downloads/).
+   On macOS with Homebrew, run `brew install cloudflared`.
+3. Run the command for your platform and keep it running.
 
-There is currently **no verified direct connection procedure for this project
-in the Meta Muse app**. Multi-Slack MCP runs as a local stdio process; Meta's
-[Muse connector guide](https://www.meta.com/en-gb/help/superintelligence/1687253048996149/)
-describes listed connectors and custom connectors, but does not document
-registering a local stdio server from your computer.
+**macOS:**
 
-To connect Slack through Muse's own connector, open **Settings > Connectors**,
-select **Connect** beside Slack if it is available, and follow the sign-in
-steps. This uses Meta's Slack integration, not this project's multiple-workspace
-or browser-session authentication features.
+```bash
+"$HOME/Library/Application Support/multi-slack-mcp/.venv/bin/python" \
+  "$HOME/Library/Application Support/multi-slack-mcp/remote.py" --tunnel
+```
 
-Meta's separate **Muse Code** product does support local MCP servers; its
-[MCP documentation](https://meta-models.github.io/muse-code-sdk/1.4/guides/extend/mcp-servers/)
-describes that setup. Muse Code configuration does not connect the Muse app.
+**Linux:**
+
+```bash
+"${XDG_DATA_HOME:-$HOME/.local/share}/multi-slack-mcp/.venv/bin/python" \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/multi-slack-mcp/remote.py" --tunnel
+```
+
+The launcher prints an HTTPS URL ending in `/mcp`. It saves a generated
+connection password in `remote-password` beside your workspace config, with
+owner-only file permissions. In a second terminal, run the same command with
+`--show-password` instead of `--tunnel` to display it. Enter this password only
+on the Multi-Slack MCP sign-in page, not in a chat. It is separate from your
+Slack login, token and cookie.
+
+The remote service listens on `127.0.0.1:8766`; the tunnel exposes its MCP and
+OAuth endpoints. Your credential admin on port 8765 stays local. The admin URL
+is **not an MCP endpoint**.
+
+[Cloudflare Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)
+are temporary: the URL changes on each launch and has no uptime guarantee.
+Stopping the launcher closes its tunnel. All remote OAuth connections must
+be authorized again after a server restart. For a stable hostname, configure
+a named HTTPS tunnel to port 8766 and replace `--tunnel` with
+`--public-url https://your-mcp.example.com`.
+
+To revoke all remote connections, stop and restart the server. To change the
+connection password too, stop the server, delete its `remote-password` file,
+and restart it. Saved Slack tokens and cookies remain unchanged.
+
+#### Connect ChatGPT web
+
+1. Start the remote connection above and copy its HTTPS `/mcp` URL.
+2. Open [ChatGPT Plugins](https://chatgpt.com/plugins), select **Add**, then
+   **Add custom MCP server**. Some versions label these **Create** and
+   **Connect MCP server**. This option must be enabled for your account or workspace.
+3. Enter a name such as **Multi-Slack MCP**, supply the URL, and select
+   **OAuth** authentication. The server supports automatic client registration.
+4. Complete the connection flow. On the Multi-Slack MCP sign-in page, check the
+   requested access, enter your connection password, and select **Allow connection**.
+5. Install the resulting plugin, start a chat, select it with `@`, and ask
+   it to list your configured Slack workspaces.
+
+The connection grants access to all configured workspaces, including sending
+messages as you. The tools identify which actions are read-only so the client
+can apply its approval controls. See [OpenAI's connection guide](https://developers.openai.com/plugins/deploy/connect-chatgpt).
+
+#### Connect Meta Muse
+
+Meta documents adding custom connectors by asking Muse in chat. With the
+remote connection running, replace the example URL in this request:
+
+> Create a custom connector named Multi-Slack MCP for the remote MCP server
+> at https://YOUR-TUNNEL.trycloudflare.com/mcp. It uses Streamable HTTP and
+> OAuth with automatic client registration. Start its OAuth sign-in flow,
+> then use slack_list_workspaces to verify the connection. Do not request my
+> Slack token or browser cookie in chat.
+
+Open the sign-in link Muse provides and enter the connection password on the
+Multi-Slack MCP page. Review the access and select **Allow connection**.
+
+The server implements the remote MCP and OAuth protocols, but Meta's
+[custom connector documentation](https://www.meta.com/en-gb/help/superintelligence/1687253048996149/)
+does not promise a standard MCP setup flow. Muse may need to build a connector
+for it; successful sign-in and a workspace-list result are the verification
+steps. If Muse cannot start OAuth, report that error rather than supplying
+Slack credentials in chat.
 
 ### Other MCP clients (macOS or Linux)
 
